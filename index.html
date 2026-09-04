@@ -228,7 +228,7 @@
                 <div class="status-msg">Cargando lista de regalos... ⏳</div>
             </div>
 
-            <!-- OPCCIÓN ABIERTA DE LLUVIA DE SOBRES -->
+            <!-- OPCIÓN ABIERTA DE LLUVIA DE SOBRES -->
             <div class="envelope-option">
                 <div class="envelope-title">✉️ Lluvia de sobres (Prefiero llevar un sobre)</div>
                 <button class="btn-gift" onclick="reserveEnvelope()">Reservar Opción</button>
@@ -257,38 +257,35 @@
         const giftsRef = db.ref('reservas');
         const envelopeRef = db.ref('lluvia_sobres');
 
-        // Orden de posiciones idéntico al estado inicial para no alterar reservas existentes
+        // Mapeo exacto de posiciones con los datos confirmados de Firebase
         const giftsList = [
-            "Bañera plegable",                              // Index 0
-            "Cojín de lactancia",                           // Index 1 (Luisa Fernanda)
-            "Pañalera (Color nude)",                        // Index 2
-            "1 Semanario",                                  // Index 3
-            "1 Centro de juegos - Gimnasio para bebés",     // Index 4 (Ivon Quessep)
-            "Mamelucos (0 a 3 meses)",                      // Index 5 (Ana María García)
-            "Pijamas (0 a 3 meses)",                        // Index 6 (Alejandra lobo)
-            "Toalla de algodón",                            // Index 7
-            "Kit de corta uñas",                            // Index 8 (Margelis Benavides-Rafael Araujo)
-            "Bodys de manga corta",                         // Index 9 (Karen Vega)
-            "Pañales de tela (Algodón blanco)",             // Index 10 (Familia barboza)
-            "Un extractor eléctrico",                       // Index 11
-            "Fular",                                        // Index 12
-            "Set de teteros Avent",                         // Index 13 (Emanuel Soto)
-            "Coche bebé",                                   // Index 14
-            "Crema Desitin (Antipañalitis)",                // Index 15
-            "Pañales etapa 2 (Huggies)",                    // Index 16 (Marlenys Perez)
-            "Pañales etapa 2 (Huggies)",                    // Index 17 (Katerin Lucia Escudero)
-            "Pañales etapa 3 (Huggies)",                    // Index 18 (Eira Guerrero)
-            "Pañales etapa 3 (Huggies)",                    // Index 19
-            "Monitor de bebé",                              // Index 20
-            "Colecho",                                      // Index 21
-            "Una cobija de algodón",                        // Index 22
-            "Tapete plegable para bebé",                    // Index 23
-            "Silla comedor para bebé",                      // Index 24 (Abuelos paternos)
-            "Mameluco (3 a 6 meses)",                       // Index 25 (Nuevos añadidos al final)
-            "Mameluco (6 a 9 meses)",                       // Index 26
-            "Pijama (3 a 6 meses)",                         // Index 27
-            "Conjunto de salida (0 a 3 meses)",             // Index 28
-            "Conjunto de salida (6 a 9 meses)"              // Index 29
+            "Bañera plegable",                              // Casilla 0
+            "Cojín de lactancia",                           // Casilla 1 (Luisa Fernanda)
+            "Pañalera (Color nude)",                        // Casilla 2
+            "Semanario (Talla 3 a 6 meses)",               // Casilla 3
+            "1 Centro de juegos - Gimnasio para bebés",     // Casilla 4 (Ivon Quessep)
+            "Mamelucos (0 a 3 meses)",                      // Casilla 5 (Ana María García)
+            "Pijamas (0 a 3 meses)",                        // Casilla 6 (Alejandra lobo)
+            "Toalla de algodón",                            // Casilla 7
+            "Kit de corta uñas",                            // Casilla 8 (Margelis Benavides-Rafael Araujo)
+            "Bodys de manga corta",                         // Casilla 9 (Karen Vega)
+            "Pañales de tela (Algodón blanco)",             // Casilla 10 (Familia Barboza)
+            "Un extractor eléctrico",                       // Casilla 11 (Disponible - Liberado)
+            "Fular",                                        // Casilla 12
+            "Set de teteros Avent",                         // Casilla 13 (Emanuel Soto)
+            "Coche bebé",                                   // Casilla 14
+            "Crema antipañalitis preferiblemente Desitin", // Casilla 15
+            "Pañales etapa 2 (Huggies)",                    // Casilla 16 (Marlenys Perez)
+            "Pañales etapa 2 (Huggies)",                    // Casilla 17 (katerin Lucia Escudero)
+            "Pañales etapa 3 (Huggies)",                    // Casilla 18 (Eira Guerrero)
+            "Pañales etapa 3 (Huggies)",                    // Casilla 19
+            "Monitor de bebé",                              // Casilla 20
+            "Colecho",                                      // Casilla 21
+            "Una cobija de algodón",                        // Casilla 22
+            "Tapete plegable para bebé",                    // Casilla 23
+            "Silla comedor para bebé",                      // Casilla 24 (Abuelos paternos)
+            "Mameluco (3 a 6 meses)",                       // Casilla 25
+            "Mameluco (6 a 9 meses)"                        // Casilla 26 (Milena Romero)
         ];
 
         let currentReservations = {};
@@ -344,7 +341,6 @@
             if (personName && personName.trim() !== "") {
                 const cleanName = personName.trim();
                 
-                // Se guarda en un nodo independiente tipo lista abierta
                 envelopeRef.push(cleanName, (error) => {
                     if (error) {
                         alert("Hubo un error al guardar. Verifica las reglas en Firebase.");
