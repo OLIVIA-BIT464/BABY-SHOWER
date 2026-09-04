@@ -169,11 +169,11 @@
             border: 1px solid #f48fb1;
         }
 
-        .loading-text {
+        .status-msg {
             grid-column: 1 / -1;
             color: #ad1457;
             font-weight: 600;
-            padding: 20px;
+            padding: 15px;
         }
     </style>
 </head>
@@ -204,7 +204,7 @@
             <p style="font-size: 0.88em; color: #7a5c65;">Elige el detalle que desees obsequiarle a Olivia para dejarlo reservado:</p>
             
             <div class="gift-list" id="giftList">
-                <div class="loading-text">Cargando regalos en tiempo real... ⏳</div>
+                <div class="status-msg">Actualizando regalos en tiempo real... ⏳</div>
             </div>
         </div>
 
@@ -219,9 +219,8 @@
     </div>
 
     <script>
-        const BIN_ID = "66f4ab59e41b4d34e437bd8f"; 
-        const API_KEY = "$2a$10$w8T9cT8T9T8T9T8T9T8T9u"; // Llave cloud sync
-        const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+        // Endpoint KV Store público de sincronización en tiempo real
+        const DB_ENDPOINT = "https://kvdb.io/4y9yNqFmY53R3yZgG8d9vQ/olivia_baby_shower_registry";
 
         const giftsList = [
             "Bañera plegable",
@@ -251,19 +250,16 @@
             "Silla comedor para bebé"
         ];
 
-        let cloudReservations = {};
+        let currentReservations = {};
 
-        async function fetchReservations() {
+        async function syncData() {
             try {
-                // Intentar leer datos de la nube
-                let response = await fetch(API_URL + "/latest");
-                if (response.ok) {
-                    let data = await response.json();
-                    cloudReservations = data.record || {};
+                const res = await fetch(DB_ENDPOINT);
+                if (res.ok) {
+                    currentReservations = await res.json();
                 }
             } catch (e) {
-                // Si falla la red, usar respaldo local
-                cloudReservations = JSON.parse(localStorage.getItem('olivia_cloud_backup') || '{}');
+                console.log("Cargando estado actual...");
             }
             renderGifts();
         }
@@ -273,7 +269,7 @@
             container.innerHTML = '';
 
             giftsList.forEach((gift, index) => {
-                const reservedBy = cloudReservations[index];
+                const reservedBy = currentReservations[index];
                 const item = document.createElement('div');
                 item.className = 'gift-item ' + (reservedBy ? 'taken' : '');
                 
@@ -289,24 +285,29 @@
         }
 
         async function reserve(id, name) {
+            // Verificar primero si alguien más lo reservó justo antes
+            await syncData();
+            if (currentReservations[id]) {
+                alert(`Lo sentimos, "${name}" ya acaba de ser reservado por otra persona.`);
+                return;
+            }
+
             const personName = prompt(`Vas a reservar: "${name}".\nPor favor escribe tu Nombre y Apellido para confirmar:`);
             if (personName && personName.trim() !== "") {
                 const cleanName = personName.trim();
-                cloudReservations[id] = cleanName;
-                localStorage.setItem('olivia_cloud_backup', JSON.stringify(cloudReservations));
+                currentReservations[id] = cleanName;
                 renderGifts();
 
-                // Guardar en la nube pública
                 try {
-                    await fetch(API_URL, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(cloudReservations)
+                    await fetch(DB_ENDPOINT, {
+                        method: 'POST',
+                        body: JSON.stringify(currentReservations)
                     });
                     alert(`¡Muchas gracias, ${cleanName}! Tu regalo ha sido reservado para Olivia.`);
                 } catch (err) {
-                    alert(`¡Muchas gracias, ${cleanName}! Tu regalo ha sido registrado.`);
+                    alert(`¡Muchas gracias, ${cleanName}! Tu reserva quedó registrada.`);
                 }
+                syncData();
             }
         }
 
@@ -319,7 +320,7 @@
                 
                 let count = 0;
                 giftsList.forEach((gift, index) => {
-                    const reservedBy = cloudReservations[index];
+                    const reservedBy = currentReservations[index];
                     if (reservedBy) {
                         count++;
                         const li = document.createElement('li');
@@ -338,8 +339,9 @@
             }
         }
 
-        // Cargar datos al abrir la página
-        fetchReservations();
+        // Consultar reservas en la nube al abrir y refrescar cada 10 segundos
+        syncData();
+        setInterval(syncData, 10000);
     </script>
 
 </body>
