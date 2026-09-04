@@ -258,40 +258,41 @@
         const db = firebase.database();
         const giftsRef = db.ref('reservas');
 
+        // Mantenemos exactamente el mismo orden numérico original de los primeros 30 regalos
         const giftsList = [
-            "Bañera plegable",
-            "Cojín de lactancia",
-            "Pañalera (Color nude)",
-            "Semanario",
-            "Centro de juegos / Gimnasio para bebés",
-            "Mameluco (0 a 3 meses)",
-            "Mameluco (3 a 6 meses)",
-            "Mameluco (6 a 9 meses)",
-            "Pijama (0 a 3 meses)",
-            "Pijama (3 a 6 meses)",
-            "Conjunto de salida (0 a 3 meses)",
-            "Conjunto de salida (6 a 9 meses)",
-            "Toalla de algodón",
-            "Kit de cortaúñas para bebé",
-            "Bodys de manga corta",
-            "Extractor de leche eléctrico",
-            "Pañales de tela (Algodón blanco)",
-            "Fular ergonómico",
-            "Set de teteros Avent",
-            "Coche para bebé",
-            "Crema antipañalitis (Preferiblemente Desitin)",
-            "Pañales etapa 2 (Huggies)",
-            "Pañales etapa 2 (Huggies)",
-            "Pañales etapa 3 (Huggies)",
-            "Pañales etapa 3 (Huggies)",
-            "Monitor de bebé",
-            "Colecho",
-            "Cobija de algodón",
-            "Tapete plegable para bebé",
-            "Silla comedor para bebé"
+            "Bañera plegable",                      // Posición 0
+            "Cojín de lactancia",                   // Posición 1
+            "Pañalera (Color nude)",                // Posición 2
+            "Semanario",                            // Posición 3
+            "Centro de juegos / Gimnasio para bebés",// Posición 4
+            "Mameluco (0 a 3 meses)",               // Posición 5
+            "Pijama (0 a 3 meses)",                 // Posición 6
+            "Conjunto de salida (0 a 3 meses)",     // Posición 7
+            "Toalla de algodón",                    // Posición 8
+            "Kit de cortaúñas para bebé",           // Posición 9
+            "Bodys de manga corta",                 // Posición 10
+            "Extractor de leche eléctrico",          // Posición 11
+            "Pañales de tela (Algodón blanco)",      // Posición 12
+            "Fular ergonómico",                     // Posición 13
+            "Set de teteros Avent",                 // Posición 14
+            "Coche para bebé",                      // Posición 15
+            "Pañales etapa 2 (Huggies)",            // Posición 16
+            "Pañales etapa 2 (Huggies)",            // Posición 17
+            "Pañales etapa 3 (Huggies)",            // Posición 18
+            "Pañales etapa 3 (Huggies)",            // Posición 19
+            "Monitor de bebé",                      // Posición 20
+            "Colecho",                              // Posición 21
+            "Cobija de algodón",                    // Posición 22
+            "Tapete plegable para bebé",            // Posición 23
+            "Silla comedor para bebé",              // Posición 24
+            "Crema antipañalitis (Preferiblemente Desitin)", // Posición 25
+            "Mameluco (3 a 6 meses)",               // Posición 26
+            "Mameluco (6 a 9 meses)",               // Posición 27
+            "Pijama (3 a 6 meses)",                 // Posición 28
+            "Conjunto de salida (6 a 9 meses)"      // Posición 29
         ];
 
-        const envelopeIndex = 99; // Índice especial para lluvia de sobres
+        const envelopeIndex = 99; // Índice especial independiente para la lluvia de sobres
         const envelopeName = "✉️ Lluvia de sobres (Prefiero llevar un sobre)";
 
         let currentReservations = {};
