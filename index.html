@@ -130,6 +130,29 @@
             opacity: 0.75;
         }
 
+        .envelope-option {
+            background: #fff5f8;
+            border: 2px dashed #ad1457;
+            border-radius: 18px;
+            padding: 18px;
+            margin-top: 25px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(173, 20, 87, 0.08);
+        }
+
+        .envelope-option.taken {
+            background-color: #f8f8f8;
+            border-color: #ddd;
+            opacity: 0.75;
+        }
+
+        .envelope-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #ad1457;
+            margin-bottom: 8px;
+        }
+
         .btn-gift {
             background-color: #ec407a;
             color: white;
@@ -210,6 +233,8 @@
             <div class="gift-list" id="giftList">
                 <div class="status-msg">Cargando lista de regalos... ⏳</div>
             </div>
+
+            <div id="envelopeSection"></div>
         </div>
 
         <!-- SECCIÓN PRIVADA PARA ORGANIZADORES -->
@@ -225,7 +250,7 @@
     <script>
         // Configuración de la base de datos de Firebase
         const firebaseConfig = {
-            databaseURL: "https://baby-shower-olivia-default-rtdb.firebaseio.com/"
+            databaseURL: "https://baby-shower-olivia-default-rtdb.firebaseio.com"
         };
 
         // Inicializar Firebase
@@ -237,29 +262,37 @@
             "Bañera plegable",
             "Cojín de lactancia",
             "Pañalera (Color nude)",
-            "1 Semanario",
-            "1 Centro de juegos - Gimnasio para bebés",
-            "Mamelucos",
-            "Pijamas",
+            "Semanario",
+            "Centro de juegos / Gimnasio para bebés",
+            "Mameluco (0 a 3 meses)",
+            "Mameluco (3 a 6 meses)",
+            "Mameluco (6 a 9 meses)",
+            "Pijama (0 a 3 meses)",
+            "Pijama (3 a 6 meses)",
+            "Conjunto de salida (0 a 3 meses)",
+            "Conjunto de salida (6 a 9 meses)",
             "Toalla de algodón",
-            "Kit de corta uñas",
+            "Kit de cortaúñas para bebé",
             "Bodys de manga corta",
-            "Un extractor eléctrico",
+            "Extractor de leche eléctrico",
             "Pañales de tela (Algodón blanco)",
-            "Fular",
+            "Fular ergonómico",
             "Set de teteros Avent",
-            "Coche bebé",
-            "Crema Desitin (Antipañalitis)",
+            "Coche para bebé",
+            "Crema antipañalitis (Preferiblemente Desitin)",
             "Pañales etapa 2 (Huggies)",
             "Pañales etapa 2 (Huggies)",
             "Pañales etapa 3 (Huggies)",
             "Pañales etapa 3 (Huggies)",
             "Monitor de bebé",
             "Colecho",
-            "Una cobija de algodón",
+            "Cobija de algodón",
             "Tapete plegable para bebé",
             "Silla comedor para bebé"
         ];
+
+        const envelopeIndex = 99; // Índice especial para lluvia de sobres
+        const envelopeName = "✉️ Lluvia de sobres (Prefiero llevar un sobre)";
 
         let currentReservations = {};
 
@@ -271,8 +304,12 @@
 
         function renderGifts() {
             const container = document.getElementById('giftList');
+            const envelopeContainer = document.getElementById('envelopeSection');
+            
             container.innerHTML = '';
+            envelopeContainer.innerHTML = '';
 
+            // Renderizar regalos normales
             giftsList.forEach((gift, index) => {
                 const reservedBy = currentReservations[index];
                 const item = document.createElement('div');
@@ -287,19 +324,32 @@
                 `;
                 container.appendChild(item);
             });
+
+            // Renderizar bloque especial para Lluvia de Sobres al final
+            const envelopeReservedBy = currentReservations[envelopeIndex];
+            const envelopeDiv = document.createElement('div');
+            envelopeDiv.className = 'envelope-option ' + (envelopeReservedBy ? 'taken' : '');
+            envelopeDiv.innerHTML = `
+                <div class="envelope-title">${envelopeName}</div>
+                ${envelopeReservedBy 
+                    ? `<button class="btn-gift" disabled>Reservado</button>` 
+                    : `<button class="btn-gift" onclick="reserve(${envelopeIndex}, '${envelopeName}')">Reservar Opción</button>`
+                }
+            `;
+            envelopeContainer.appendChild(envelopeDiv);
         }
 
         function reserve(id, name) {
-            const personName = prompt(`Vas a reservar: "${name}".\nPor favor escribe tu Nombre y Apellido para confirmar:`);
+            const personName = prompt(`Vas a seleccionar: "${name}".\nPor favor escribe tu Nombre y Apellido para confirmar:`);
             if (personName && personName.trim() !== "") {
                 const cleanName = personName.trim();
                 
                 // Guardar reserva directamente en Firebase
                 giftsRef.child(id).set(cleanName, (error) => {
                     if (error) {
-                        alert("Hubo un error al guardar. Verifica que hayas publicado las reglas en Firebase.");
+                        alert("Hubo un error al guardar. Verifica las reglas en Firebase.");
                     } else {
-                        alert(`¡Muchas gracias, ${cleanName}! Tu regalo ha sido reservado para Olivia.`);
+                        alert(`¡Muchas gracias, ${cleanName}! Tu elección ha sido registrada para el Baby Shower de Olivia.`);
                     }
                 });
             }
@@ -322,6 +372,14 @@
                         adminUl.appendChild(li);
                     }
                 });
+
+                // Incluir reserva de lluvia de sobres si la hay
+                if (currentReservations[envelopeIndex]) {
+                    count++;
+                    const li = document.createElement('li');
+                    li.innerHTML = `<b>${envelopeName}:</b> Reservado por <span style="color:#ad1457;">${currentReservations[envelopeIndex]}</span>`;
+                    adminUl.appendChild(li);
+                }
 
                 if (count === 0) {
                     adminUl.innerHTML = '<li>Aún no hay regalos reservados en la lista.</li>';
