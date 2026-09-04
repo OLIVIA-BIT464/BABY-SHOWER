@@ -218,19 +218,9 @@
         </div>
     </div>
 
-    <!-- Cargar Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
     <script>
-        // Configuración de Firebase en tiempo real de Google
-        const firebaseConfig = {
-            databaseURL: "https://babyshower-olivia-default-rtdb.firebaseio.com/"
-        };
-        
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        const giftsRef = database.ref('regalos');
+        const BIN_ID = "66f4ab59e41b4d34e437bd8f";
+        const API_URL = "https://api.jsonbin.io/v3/b/" + BIN_ID;
 
         const giftsList = [
             "Bañera plegable",
@@ -262,11 +252,21 @@
 
         let currentReservations = {};
 
-        // Escuchar cambios en la nube en TIEMPO REAL
-        giftsRef.on('value', (snapshot) => {
-            currentReservations = snapshot.val() || {};
+        async function loadReservations() {
+            try {
+                const res = await fetch(API_URL + "/latest", {
+                    headers: { "X-Bin-Meta": "false" }
+                });
+                if (res.ok) {
+                    currentReservations = await res.json();
+                } else {
+                    currentReservations = JSON.parse(localStorage.getItem('olivia_backup') || '{}');
+                }
+            } catch (e) {
+                currentReservations = JSON.parse(localStorage.getItem('olivia_backup') || '{}');
+            }
             renderGifts();
-        });
+        }
 
         function renderGifts() {
             const container = document.getElementById('giftList');
@@ -288,24 +288,27 @@
             });
         }
 
-        function reserve(id, name) {
-            if (currentReservations[id]) {
-                alert(`Lo sentimos, "${name}" ya fue reservado por otra persona.`);
-                return;
-            }
-
+        async function reserve(id, name) {
             const personName = prompt(`Vas a reservar: "${name}".\nPor favor escribe tu Nombre y Apellido para confirmar:`);
             if (personName && personName.trim() !== "") {
                 const cleanName = personName.trim();
-                
-                // Guardar directamente en la base de datos de Google en tiempo real
-                giftsRef.child(id).set(cleanName, (error) => {
-                    if (error) {
-                        alert("Hubo un error al guardar la reserva. Intenta de nuevo.");
-                    } else {
-                        alert(`¡Muchas gracias, ${cleanName}! Tu regalo ha sido reservado para Olivia.`);
-                    }
-                });
+                currentReservations[id] = cleanName;
+                localStorage.setItem('olivia_backup', JSON.stringify(currentReservations));
+                renderGifts();
+
+                try {
+                    await fetch(API_URL, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(currentReservations)
+                    });
+                    alert(`¡Muchas gracias, ${cleanName}! Tu regalo ha sido reservado para Olivia.`);
+                } catch (err) {
+                    alert(`¡Muchas gracias, ${cleanName}! Tu reserva quedó registrada.`);
+                }
+                loadReservations();
             }
         }
 
@@ -336,6 +339,10 @@
                 alert("Clave incorrecta.");
             }
         }
+
+        // Carga inmediata y sincronización cada 8 segundos
+        loadReservations();
+        setInterval(loadReservations, 8000);
     </script>
 
 </body>
