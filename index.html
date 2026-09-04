@@ -168,6 +168,13 @@
             border-radius: 12px;
             border: 1px solid #f48fb1;
         }
+
+        .loading-text {
+            grid-column: 1 / -1;
+            color: #ad1457;
+            font-weight: 600;
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
@@ -196,10 +203,12 @@
             <h3>🎁 Mesa de Regalos</h3>
             <p style="font-size: 0.88em; color: #7a5c65;">Elige el detalle que desees obsequiarle a Olivia para dejarlo reservado:</p>
             
-            <div class="gift-list" id="giftList"></div>
+            <div class="gift-list" id="giftList">
+                <div class="loading-text">Cargando regalos en tiempo real... ⏳</div>
+            </div>
         </div>
 
-        <!-- SECCIÓN PRIVADA PARA VER NOMBRES -->
+        <!-- SECCIÓN PRIVADA PARA ORGANIZADORES -->
         <div class="admin-section">
             <button class="btn-admin" onclick="showAdminList()">🔒 Ver quién reservó cada regalo (Uso exclusivo de organizadores)</button>
             <div class="admin-list" id="adminList">
@@ -210,7 +219,11 @@
     </div>
 
     <script>
-        const gifts = [
+        const BIN_ID = "66f4ab59e41b4d34e437bd8f"; 
+        const API_KEY = "$2a$10$w8T9cT8T9T8T9T8T9T8T9u"; // Llave cloud sync
+        const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+
+        const giftsList = [
             "Bañera plegable",
             "Cojín de lactancia",
             "Pañalera (Color nude)",
@@ -238,12 +251,29 @@
             "Silla comedor para bebé"
         ];
 
-        function loadGifts() {
+        let cloudReservations = {};
+
+        async function fetchReservations() {
+            try {
+                // Intentar leer datos de la nube
+                let response = await fetch(API_URL + "/latest");
+                if (response.ok) {
+                    let data = await response.json();
+                    cloudReservations = data.record || {};
+                }
+            } catch (e) {
+                // Si falla la red, usar respaldo local
+                cloudReservations = JSON.parse(localStorage.getItem('olivia_cloud_backup') || '{}');
+            }
+            renderGifts();
+        }
+
+        function renderGifts() {
             const container = document.getElementById('giftList');
             container.innerHTML = '';
 
-            gifts.forEach((gift, index) => {
-                const reservedBy = localStorage.getItem('olivia_gift_' + index);
+            giftsList.forEach((gift, index) => {
+                const reservedBy = cloudReservations[index];
                 const item = document.createElement('div');
                 item.className = 'gift-item ' + (reservedBy ? 'taken' : '');
                 
@@ -258,12 +288,25 @@
             });
         }
 
-        function reserve(id, name) {
+        async function reserve(id, name) {
             const personName = prompt(`Vas a reservar: "${name}".\nPor favor escribe tu Nombre y Apellido para confirmar:`);
             if (personName && personName.trim() !== "") {
-                localStorage.setItem('olivia_gift_' + id, personName.trim());
-                alert(`¡Muchas gracias, ${personName}! Tu regalo ha sido reservado para Olivia.`);
-                loadGifts();
+                const cleanName = personName.trim();
+                cloudReservations[id] = cleanName;
+                localStorage.setItem('olivia_cloud_backup', JSON.stringify(cloudReservations));
+                renderGifts();
+
+                // Guardar en la nube pública
+                try {
+                    await fetch(API_URL, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(cloudReservations)
+                    });
+                    alert(`¡Muchas gracias, ${cleanName}! Tu regalo ha sido reservado para Olivia.`);
+                } catch (err) {
+                    alert(`¡Muchas gracias, ${cleanName}! Tu regalo ha sido registrado.`);
+                }
             }
         }
 
@@ -275,8 +318,8 @@
                 adminUl.innerHTML = '';
                 
                 let count = 0;
-                gifts.forEach((gift, index) => {
-                    const reservedBy = localStorage.getItem('olivia_gift_' + index);
+                giftsList.forEach((gift, index) => {
+                    const reservedBy = cloudReservations[index];
                     if (reservedBy) {
                         count++;
                         const li = document.createElement('li');
@@ -286,7 +329,7 @@
                 });
 
                 if (count === 0) {
-                    adminUl.innerHTML = '<li>Aún no hay regalos reservados.</li>';
+                    adminUl.innerHTML = '<li>Aún no hay regalos reservados en la lista.</li>';
                 }
 
                 adminList.style.display = 'block';
@@ -295,7 +338,8 @@
             }
         }
 
-        loadGifts();
+        // Cargar datos al abrir la página
+        fetchReservations();
     </script>
 
 </body>
