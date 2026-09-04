@@ -120,60 +120,16 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.03);
         }
 
-        .gift-item.taken {
-            background-color: #f8f8f8;
-            border-color: #ddd;
-            opacity: 0.75;
-        }
-
         .btn-gift {
             background-color: #ec407a;
             color: white;
             border: none;
-            padding: 7px 14px;
+            padding: 8px 14px;
             border-radius: 12px;
             cursor: pointer;
             margin-top: 8px;
             font-size: 0.85em;
             font-weight: 600;
-        }
-
-        .btn-gift:disabled {
-            background-color: #bdbdbd;
-            cursor: not-allowed;
-        }
-
-        .admin-section {
-            margin-top: 35px;
-            padding-top: 15px;
-            border-top: 1px solid #f8bbd0;
-            font-size: 0.8em;
-        }
-
-        .btn-admin {
-            background: none;
-            border: none;
-            color: #ad1457;
-            text-decoration: underline;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-
-        .admin-list {
-            display: none;
-            margin-top: 15px;
-            text-align: left;
-            background: #fff;
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid #f48fb1;
-        }
-
-        .status-msg {
-            grid-column: 1 / -1;
-            color: #ad1457;
-            font-weight: 600;
-            padding: 15px;
         }
     </style>
 </head>
@@ -201,26 +157,14 @@
 
         <div class="gift-section">
             <h3>🎁 Mesa de Regalos</h3>
-            <p style="font-size: 0.88em; color: #7a5c65;">Elige el detalle que desees obsequiarle a Olivia para dejarlo reservado:</p>
+            <p style="font-size: 0.88em; color: #7a5c65;">Elige el detalle que desees obsequiarle a Olivia e infórmanos por WhatsApp para dejarlo apartado:</p>
             
-            <div class="gift-list" id="giftList">
-                <div class="status-msg">Cargando lista de regalos... ⏳</div>
-            </div>
-        </div>
-
-        <!-- SECCIÓN PRIVADA PARA ORGANIZADORES -->
-        <div class="admin-section">
-            <button class="btn-admin" onclick="showAdminList()">🔒 Ver quién reservó cada regalo (Uso exclusivo de organizadores)</button>
-            <div class="admin-list" id="adminList">
-                <h4 style="margin:0 0 10px 0; color:#ad1457;">Lista de Reservas:</h4>
-                <ul id="adminUl" style="padding-left: 20px; margin: 0; line-height: 1.6;"></ul>
-            </div>
+            <div class="gift-list" id="giftList"></div>
         </div>
     </div>
 
     <script>
-        const BIN_ID = "66f4ab59e41b4d34e437bd8f";
-        const API_URL = "https://api.jsonbin.io/v3/b/" + BIN_ID;
+        const PHONE_NUMBER = "573116919074"; // Número de WhatsApp de los organizadores
 
         const giftsList = [
             "Bañera plegable",
@@ -250,99 +194,29 @@
             "Silla comedor para bebé"
         ];
 
-        let currentReservations = {};
-
-        async function loadReservations() {
-            try {
-                const res = await fetch(API_URL + "/latest", {
-                    headers: { "X-Bin-Meta": "false" }
-                });
-                if (res.ok) {
-                    currentReservations = await res.json();
-                } else {
-                    currentReservations = JSON.parse(localStorage.getItem('olivia_backup') || '{}');
-                }
-            } catch (e) {
-                currentReservations = JSON.parse(localStorage.getItem('olivia_backup') || '{}');
-            }
-            renderGifts();
-        }
-
         function renderGifts() {
             const container = document.getElementById('giftList');
             container.innerHTML = '';
 
-            giftsList.forEach((gift, index) => {
-                const reservedBy = currentReservations[index];
+            giftsList.forEach((gift) => {
                 const item = document.createElement('div');
-                item.className = 'gift-item ' + (reservedBy ? 'taken' : '');
+                item.className = 'gift-item';
                 
                 item.innerHTML = `
                     <span><strong>${gift}</strong></span>
-                    ${reservedBy 
-                        ? `<button class="btn-gift" disabled>Reservado</button>` 
-                        : `<button class="btn-gift" onclick="reserve(${index}, '${gift}')">Reservar</button>`
-                    }
+                    <button class="btn-gift" onclick="reserveViaWhatsApp('${gift}')">Reservar 📲</button>
                 `;
                 container.appendChild(item);
             });
         }
 
-        async function reserve(id, name) {
-            const personName = prompt(`Vas a reservar: "${name}".\nPor favor escribe tu Nombre y Apellido para confirmar:`);
-            if (personName && personName.trim() !== "") {
-                const cleanName = personName.trim();
-                currentReservations[id] = cleanName;
-                localStorage.setItem('olivia_backup', JSON.stringify(currentReservations));
-                renderGifts();
-
-                try {
-                    await fetch(API_URL, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(currentReservations)
-                    });
-                    alert(`¡Muchas gracias, ${cleanName}! Tu regalo ha sido reservado para Olivia.`);
-                } catch (err) {
-                    alert(`¡Muchas gracias, ${cleanName}! Tu reserva quedó registrada.`);
-                }
-                loadReservations();
-            }
+        function reserveViaWhatsApp(giftName) {
+            const message = encodeURIComponent(`¡Hola! Quisiera reservar el siguiente regalo para Olivia: ${giftName} 🎁👶🏻`);
+            const whatsappUrl = `https://wa.me/${PHONE_NUMBER}?text=${message}`;
+            window.open(whatsappUrl, '_blank');
         }
 
-        function showAdminList() {
-            const pass = prompt("Ingresa la clave secreta de organizador:");
-            if (pass === "admin123") {
-                const adminList = document.getElementById('adminList');
-                const adminUl = document.getElementById('adminUl');
-                adminUl.innerHTML = '';
-                
-                let count = 0;
-                giftsList.forEach((gift, index) => {
-                    const reservedBy = currentReservations[index];
-                    if (reservedBy) {
-                        count++;
-                        const li = document.createElement('li');
-                        li.innerHTML = `<b>${gift}:</b> Reservado por <span style="color:#ad1457;">${reservedBy}</span>`;
-                        adminUl.appendChild(li);
-                    }
-                });
-
-                if (count === 0) {
-                    adminUl.innerHTML = '<li>Aún no hay regalos reservados en la lista.</li>';
-                }
-
-                adminList.style.display = 'block';
-            } else if (pass !== null) {
-                alert("Clave incorrecta.");
-            }
-        }
-
-        // Carga inmediata y sincronización cada 8 segundos
-        loadReservations();
-        setInterval(loadReservations, 8000);
+        renderGifts();
     </script>
 
 </body>
